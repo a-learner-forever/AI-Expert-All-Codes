@@ -1,82 +1,93 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 
-def display_image(title, image):
-    """Utility function to display an image."""
-    plt.figure(figsize=(8, 8))
-    if len(image.shape) == 2:  # Grayscale image
-        plt.imshow(image, cmap='gray')
-    else:  # Color image
-        plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-    plt.title(title)
-    plt.axis('off')
-    plt.show()
+def apply_color_filter(image, filter_type):
+    """Apply the specified color filter to the image."""
+    # Create a copy of the image to avoid modifying the original
+    filtered_image = image.copy()
 
-def interactive_edge_detection(image_path):
-    """Interactive activity for edge detection and filtering."""
-    image = cv2.imread(image_path)
-    if image is None:
-        print("Error: Image not found!")
-        return
-    
-    # Convert to grayscale
-    # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # display_image("Original Grayscale Image", gray_image)
-    
-    print("Select an option:")
-    print("1. Sobel Edge Detection")
-    print("2. Canny Edge Detection")
-    print("3. Laplacian Edge Detection")
-    print("4. Gaussian Smoothing")
-    print("5. Median Filtering")
-    print("6. Exit")
+    if filter_type == "original":
+        # Do nothing; show the image as is
+        return filtered_image
+
+    elif filter_type == "red_tint":
+        # Remove blue and green channels for red tint
+        filtered_image[:, :, 1] = 0  # Green channel
+        filtered_image[:, :, 0] = 0  # Blue channel
+
+    elif filter_type == "blue_tint":
+        # Remove red and green channels for blue tint
+        filtered_image[:, :, 1] = 0  # Green channel
+        filtered_image[:, :, 2] = 0  # Red channel
+
+    elif filter_type == "green_tint":
+        # Remove blue and red channels for green tint
+        filtered_image[:, :, 0] = 0  # Blue channel
+        filtered_image[:, :, 2] = 0  # Red channel
+
+    elif filter_type == "increase_red":
+        # Increase the intensity of the red channel
+        filtered_image[:, :, 2] = cv2.add(filtered_image[:, :, 2], 50)  # Increase red channel
+
+    elif filter_type == "decrease_blue":
+        # Decrease the intensity of the blue channel
+        filtered_image[:, :, 0] = cv2.subtract(filtered_image[:, :, 0], 50)  # Decrease blue channel
+
+    return filtered_image
+
+
+# Load the image
+image_path = 'example.jpg'  # Provide your image path
+image = cv2.imread(image_path)
+
+if image is None:
+    print("Error: Image not found!")
+else:
+    # Resize the image to 800x800 (width=800, height=800)
+    image = cv2.resize(image, (1200, 800))
+
+    filter_type = "original"  # Default filter type
+
+    print("Press the following keys to apply filters:")
+    print("o - Original")
+    print("r - Red Tint")
+    print("b - Blue Tint")
+    print("g - Green Tint")
+    print("i - Increase Red Intensity")
+    print("d - Decrease Blue Intensity")
+    print("q - Quit")
 
     while True:
-        choice = input("Enter your choice (1-6): ")
+        # Apply the selected filter
+        filtered_image = apply_color_filter(image, filter_type)
 
-        if choice == "1":
-            # Sobel Edge Detection
-            sobelx = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)
-            sobely = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)
-            combined_sobel = cv2.bitwise_or(sobelx.astype(np.uint8), sobely.astype(np.uint8))
-            display_image("Sobel Edge Detection", combined_sobel)
+        # Display the filtered image
+        cv2.imshow("Filtered Image", filtered_image)
 
-        elif choice == "2":
-            # Canny Edge Detection
-            print("Adjust thresholds for Canny (default: 100 and 200)")
-            lower_thresh = int(input("Enter lower threshold: "))
-            upper_thresh = int(input("Enter upper threshold: "))
-            edges = cv2.Canny(image, lower_thresh, upper_thresh)
-            display_image("Canny Edge Detection", edges)
+        # Wait for key press (use waitKey(0) or waitKey(1), depending on your desired behavior)
+        key = cv2.waitKey(0) & 0xFF
 
-        elif choice == "3":
-            # Laplacian Edge Detection
-            laplacian = cv2.Laplacian(image, cv2.CV_64F)
-            display_image("Laplacian Edge Detection", np.abs(laplacian).astype(np.uint8))
-
-        elif choice == "4":
-            # Gaussian Smoothing
-            print("Adjust kernel size for Gaussian blur (must be odd, default: 5)")
-            kernel_size = int(input("Enter kernel size (odd number): "))
-            blurred = cv2.GaussianBlur(image, (kernel_size, kernel_size), 0)
-            display_image("Gaussian Smoothed Image", blurred)
-
-        elif choice == "5":
-            # Median Filtering
-            print("Adjust kernel size for Median filtering (must be odd, default: 5)")
-            kernel_size = int(input("Enter kernel size (odd number): "))
-            median_filtered = cv2.medianBlur(image, kernel_size)
-            display_image("Median Filtered Image", median_filtered)
-
-        elif choice == "6":
+        # Map key presses to filters
+        if key == ord('o'):
+            filter_type = "original"
+        elif key == ord('r'):
+            filter_type = "red_tint"
+        elif key == ord('b'):
+            filter_type = "blue_tint"
+        elif key == ord('g'):
+            filter_type = "green_tint"
+        elif key == ord('i'):
+            filter_type = "increase_red"
+        elif key == ord('d'):
+            filter_type = "decrease_blue"
+        elif key == ord('q'):
             print("Exiting...")
             break
-
         else:
-            print("Invalid choice. Please select a number between 1 and 6.")
+            print("Invalid key! Please use 'o', 'r', 'b', 'g', 'i', 'd', or 'q'.")
 
-# Provide the path to an image for the activity
-interactive_edge_detection('input.jpg')
+    cv2.destroyAllWindows()
+
+
 
 
